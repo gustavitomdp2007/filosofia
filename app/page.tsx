@@ -4,7 +4,7 @@ import { Footer } from "./componentes/footer.componentes"
 
 export default function Home() {
   return (
-    <main className="min-h-screen philosophy-gradient relative overflow-hidden">
+    <div className="min-h-screen flex flex-col philosophy-gradient relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl animate-float" />
         <div
@@ -20,6 +20,6 @@ export default function Home() {
       <Header />
       <PhilosophyQuote />
       <Footer />
-    </main>
+    </div>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { RefreshCw, Share2, Heart, Scroll, Lightbulb, BookOpen, Info, X } from "lucide-react"
+import { RefreshCw, Share2, Heart, Scroll, Lightbulb, BookOpen, Info, X } from 'lucide-react'
 import { PhilosophyButton } from "./filobotones"
 
 interface Quote {
@@ -431,6 +431,7 @@ export function PhilosophyQuote() {
             <button
               onClick={() => setIsContextOpen(false)}
               className="absolute top-4 right-4 p-2 rounded-lg hover:bg-primary/10 transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Cerrar"
             >
               <X className="w-5 h-5" />
             </button>
