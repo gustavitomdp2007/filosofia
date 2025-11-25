@@ -1,37 +1,81 @@
 "use client"
+
+import { PhilosophyButton } from "../componentes/filobotones"
 import { Moon, Sun, Scroll, Feather, BookOpen, Heart } from "lucide-react"
-import { PhilosophyButton } from "./filobotones"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export function Header() {
+  const [isDark, setIsDark] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const isDarkMode = localStorage.getItem("theme") === "dark"
+    setIsDark(isDarkMode)
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark")
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const newDarkMode = !isDark
+    setIsDark(newDarkMode)
+    if (newDarkMode) {
+      document.documentElement.classList.add("dark")
+      localStorage.setItem("theme", "dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+      localStorage.setItem("theme", "light")
+    }
+  }
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
   return (
-   <header className="w-full border-b border-border/30 glass-effect relative">
+    <header
+      className={`w-full border-b border-border/30 glass-effect relative sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled ? "backdrop-blur-xl bg-background/80 shadow-lg" : "backdrop-blur-sm bg-background/50"
+      }`}
+    >
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-50" />
 
-      <div className="container mx-auto px-6 py-6 relative z-10">
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 relative z-10">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href="/" className="flex items-center space-x-2 md:space-x-3 group">
             <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform duration-300">
-                <Scroll className="w-5 h-5 text-primary" />
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform duration-300">
+                <Scroll className="w-4 h-4 md:w-5 md:h-5 text-primary" />
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent/30 flex items-center justify-center">
-                <Feather className="w-2.5 h-2.5 text-accent" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 rounded-full bg-accent/30 flex items-center justify-center">
+                <Feather className="w-2 h-2 md:w-2.5 md:h-2.5 text-accent" />
               </div>
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground tracking-tight">Filosofía Diaria</h1>
-              <p className="text-xs text-muted-foreground font-light">Sabiduría atemporal</p>
+              <h1 className="text-base md:text-xl font-semibold text-foreground tracking-tight">Filosofía Diaria</h1>
+              <p className="text-xs text-muted-foreground font-light hidden md:block">Sabiduría atemporal</p>
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
             <Link
               href="/filosofos"
               className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 text-sm group"
             >
               <BookOpen className="w-4 h-4 group-hover:scale-110 transition-transform" />
               Filósofos
+            </Link>
+            <Link
+              href="/queesfilosofia"
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 text-sm group"
+            >
+              <Scroll className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              Qué es Filosofía
             </Link>
             <Link
               href="/guardados"
@@ -49,11 +93,30 @@ export function Header() {
             </Link>
           </nav>
 
-          <PhilosophyButton variant="secondary">
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Cambiar tema</span>
-          </PhilosophyButton>
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Mobile menu */}
+            <div className="md:hidden flex items-center gap-1">
+              <Link href="/filosofos">
+                <PhilosophyButton variant="secondary" className="w-8 h-8 p-0 rounded-full">
+                  <BookOpen className="h-3.5 w-3.5" />
+                </PhilosophyButton>
+              </Link>
+              <Link href="/guardados">
+                <PhilosophyButton variant="secondary" className="w-8 h-8 p-0 rounded-full">
+                  <Heart className="h-3.5 w-3.5" />
+                </PhilosophyButton>
+              </Link>
+            </div>
+
+            <PhilosophyButton
+              variant="secondary"
+              className="w-8 h-8 md:w-10 md:h-10 p-0 rounded-full hover:scale-105"
+              onClick={toggleTheme}
+            >
+              {isDark ? <Moon className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <Sun className="h-3.5 w-3.5 md:h-4 md:w-4" />}
+              <span className="sr-only">Cambiar tema</span>
+            </PhilosophyButton>
+          </div>
         </div>
       </div>
     </header>

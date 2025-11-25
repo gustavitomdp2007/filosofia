@@ -1,9 +1,6 @@
-@import "tailwindcss/theme" layer(theme);
 @import "tailwindcss";
-@import "tailwindcss/utilities" layer(utilities);
-@import "tailwindcss/preflight" layer(base);
-
 @import "tw-animate-css";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -191,7 +188,27 @@
   }
 }
 
-/* Añadiendo animación para las tarjetas de filósofos al hacer scroll */
+/* Añadiendo animaciones para el modal interactivo de ramas filosóficas */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 @keyframes philosopherCardAppear {
   from {
     opacity: 0;
@@ -223,7 +240,15 @@
   animation: contentReveal 0.5s ease-out forwards;
 }
 
-/* Clases para las tarjetas de filósofos con animación al hacer scroll */
+/* Añadiendo clases de animación para modales */
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .philosopher-card {
   opacity: 0;
   transform: translateY(60px) scale(0.9);
@@ -256,4 +281,11 @@
 
 .dark .philosophy-gradient {
   background: linear-gradient(135deg, oklch(0.08 0.01 45) 0%, oklch(0.1 0.015 65) 50%, oklch(0.06 0.008 45) 100%);
+}
+
+/* Optimización para móviles */
+@media (max-width: 768px) {
+  .philosopher-card {
+    transform: translateY(30px) scale(0.95);
+  }
 }
