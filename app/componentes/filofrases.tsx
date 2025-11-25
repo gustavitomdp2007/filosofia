@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { RefreshCw, Share2, Heart, Scroll, Lightbulb, BookOpen, Info, X } from 'lucide-react'
+import { RefreshCw, Share2, Heart, Scroll, Lightbulb, BookOpen, Info, X } from "lucide-react"
 import { PhilosophyButton } from "./filobotones"
 
 interface Quote {
@@ -11,6 +11,7 @@ interface Quote {
   school: string
   context: string
   origin: string
+  savedAt?: string
 }
 
 const philosophyQuotes: Quote[] = [
@@ -287,7 +288,7 @@ const philosophyQuotes: Quote[] = [
 ]
 
 export function PhilosophyQuote() {
-  const [currentQuote, setCurrentQuote] = useState<Quote>(philosophyQuotes[0])
+  const [currentQuote, setCurrentQuote] = useState(philosophyQuotes[0])
   const [isLiked, setIsLiked] = useState(false)
   const [fadeClass, setFadeClass] = useState("opacity-100")
   const [isLoading, setIsLoading] = useState(false)
@@ -345,6 +346,30 @@ export function PhilosophyQuote() {
     }
   }
 
+  const toggleSave = () => {
+    const savedQuotes = JSON.parse(localStorage.getItem("savedQuotes") || "[]")
+    const quoteExists = savedQuotes.some((q: any) => q.text === currentQuote.text)
+
+    if (quoteExists) {
+      const filtered = savedQuotes.filter((q: any) => q.text !== currentQuote.text)
+      localStorage.setItem("savedQuotes", JSON.stringify(filtered))
+      setIsLiked(false)
+    } else {
+      savedQuotes.push({
+        ...currentQuote,
+        savedAt: new Date().toISOString(),
+      })
+      localStorage.setItem("savedQuotes", JSON.stringify(savedQuotes))
+      setIsLiked(true)
+    }
+  }
+
+  useEffect(() => {
+    const savedQuotes = JSON.parse(localStorage.getItem("savedQuotes") || "[]")
+    const isQuoteSaved = savedQuotes.some((q: any) => q.text === currentQuote.text)
+    setIsLiked(isQuoteSaved)
+  }, [currentQuote])
+
   return (
     <section className="flex-1 flex items-center justify-center px-6 py-12 md:py-24 relative">
       <div className="w-full max-w-4xl mx-auto animate-fade-in-up">
@@ -393,7 +418,7 @@ export function PhilosophyQuote() {
                 Contexto
               </PhilosophyButton>
 
-              <PhilosophyButton variant="like" onClick={() => setIsLiked(!isLiked)} isActive={isLiked}>
+              <PhilosophyButton variant="like" onClick={toggleSave} isActive={isLiked}>
                 <Heart className={`w-4 h-4 transition-all duration-300 ${isLiked ? "fill-current scale-110" : ""}`} />
                 {isLiked ? "Guardado" : "Guardar"}
               </PhilosophyButton>
@@ -424,12 +449,21 @@ export function PhilosophyQuote() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-modal-fade-in"
-            onClick={() => setIsContextOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsContextOpen(false)
+            }}
           />
 
-          <div className="relative w-full max-w-2xl bg-background/95 backdrop-blur-xl border border-primary/20 rounded-2xl p-6 md:p-8 shadow-2xl animate-modal-slide-up">
+          <div
+            className="relative w-full max-w-2xl bg-background/95 backdrop-blur-xl border border-primary/20 rounded-2xl p-6 md:p-8 shadow-2xl animate-modal-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
-              onClick={() => setIsContextOpen(false)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsContextOpen(false)
+              }}
               className="absolute top-4 right-4 p-2 rounded-lg hover:bg-primary/10 transition-colors text-muted-foreground hover:text-foreground"
               aria-label="Cerrar"
             >
