@@ -1,7 +1,7 @@
 import { PhilosophyQuote } from "./componentes/filofrases"
 import { Header } from "./componentes/header.components"
 import { Footer } from "./componentes/footer.componentes"
-
+import { SpeedInsights } from "@vercel/speed-insights/next"
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col philosophy-gradient relative overflow-hidden">
