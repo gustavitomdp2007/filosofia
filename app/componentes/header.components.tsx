@@ -99,6 +99,13 @@ export function Header() {
                 Filósofos
               </Link>
               <Link
+                href="/consejero"
+                className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 text-sm group"
+              >
+                <Brain className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                Consejero
+              </Link>
+              <Link
                 href="/que-es-filosofia"
                 className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 text-sm group"
               >
