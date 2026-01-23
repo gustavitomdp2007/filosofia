@@ -42,7 +42,7 @@ export function Footer() {
               </a>
 
               <a
-                href="https://github.com/tu-usuario"
+                href="https://github.com/gustavitomdp2007"
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 group"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -53,29 +53,6 @@ export function Footer() {
                 <span className="hidden sm:inline">GitHub</span>
               </a>
 
-              <a
-                href="https://linkedin.com/in/tu-usuario"
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 group"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300">
-                  <Linkedin className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                </div>
-                <span className="hidden sm:inline">LinkedIn</span>
-              </a>
-
-              <a
-                href="https://twitter.com/tu-usuario"
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all duration-300 group"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300">
-                  <Twitter className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                </div>
-                <span className="hidden sm:inline">Twitter</span>
-              </a>
             </div>
           </div>
 

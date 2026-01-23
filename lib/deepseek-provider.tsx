@@ -1,28 +1,76 @@
 "use client"
 
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+} from "react"
 
-import { createContext, useContext, useState, useCallback } from "react"
+//
+// TYPES
+//
 
-// Crear el contexto
-const DeepSeekContext = createContext()
-
-
-export const useDeepSeek = () => {
-  const context = useContext(DeepSeekContext)
-  if (!context) {
-    throw new Error("useDeepSeek must be used within a DeepSeekProvider")
-  }
-  return context
+export interface DeepSeekMessage {
+  role: "system" | "user" | "assistant"
+  content: string
 }
 
-export const DeepSeekProvider = ({ children, apiKey, baseUrl = "https://api.deepseek.com" }) => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [conversation, setConversation] = useState([])
+interface SendMessageOptions {
+  model?: string
+  maxTokens?: number
+  temperature?: number
+  stream?: boolean
+  systemPrompt?: string
+}
 
-  // Función principal para enviar mensajes
+interface DeepSeekContextType {
+  isLoading: boolean
+  error: string | null
+  conversation: DeepSeekMessage[]
+
+  sendMessage: (message: string, options?: SendMessageOptions) => Promise<any>
+  resetConversation: () => void
+
+  hasConversation: boolean
+  lastMessage: DeepSeekMessage | undefined
+}
+
+interface ProviderProps {
+  children: ReactNode
+  apiKey: string | undefined
+  baseUrl?: string
+}
+
+//
+// CONTEXT
+//
+
+const DeepSeekContext = createContext<DeepSeekContextType | null>(null)
+
+export const useDeepSeek = () => {
+  const ctx = useContext(DeepSeekContext)
+  if (!ctx)
+    throw new Error("useDeepSeek must be used within a DeepSeekProvider")
+  return ctx
+}
+
+//
+// PROVIDER PRINCIPAL
+//
+
+export const DeepSeekProvider = ({
+  children,
+  apiKey,
+  baseUrl = "https://api.deepseek.com",
+}: ProviderProps) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [conversation, setConversation] = useState<DeepSeekMessage[]>([])
+
   const sendMessage = useCallback(
-    async (message, options = {}) => {
+    async (message: string, options: SendMessageOptions = {}) => {
       const {
         model = "deepseek-chat",
         maxTokens = 1000,
@@ -34,10 +82,14 @@ export const DeepSeekProvider = ({ children, apiKey, baseUrl = "https://api.deep
       setIsLoading(true)
       setError(null)
 
-      const messages = [{ role: "system", content: systemPrompt }, ...conversation, { role: "user", content: message }]
+      const messages: DeepSeekMessage[] = [
+        { role: "system", content: systemPrompt },
+        ...conversation,
+        { role: "user", content: message },
+      ]
 
       try {
-        const response = await fetch(`${baseUrl}/chat/completions`, {
+        const res = await fetch(`${baseUrl}/chat/completions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -52,37 +104,33 @@ export const DeepSeekProvider = ({ children, apiKey, baseUrl = "https://api.deep
           }),
         })
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`)
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(
+            errData.error?.message ||
+              `HTTP error! status: ${res.status}`
+          )
         }
 
-        const data = await response.json()
+        const data = await res.json()
+        const assistantResponse = data.choices[0].message.content
 
-        const assistantMessage = data.choices[0].message.content
-
-        // Actualizar conversación
-        const updatedConversation = [
-          ...messages.slice(1), // Excluir system prompt
-          { role: "assistant", content: assistantMessage },
+        const updated: DeepSeekMessage[] = [
+          ...messages.slice(1), // remove system prompt
+          { role: "assistant", content: assistantResponse },
         ]
 
-        setConversation(updatedConversation)
+        setConversation(updated)
 
         return {
           success: true,
-          message: assistantMessage,
+          message: assistantResponse,
           fullResponse: data,
-          conversation: updatedConversation,
         }
-      } catch (err) {
-        const errorMessage = err.message || "Error al conectar con DeepSeek"
-        setError(errorMessage)
-        return {
-          success: false,
-          error: errorMessage,
-          conversation,
-        }
+      } catch (err: any) {
+        const msg = err?.message || "Error al conectar con DeepSeek"
+        setError(msg)
+        return { success: false, error: msg }
       } finally {
         setIsLoading(false)
       }
@@ -90,132 +138,47 @@ export const DeepSeekProvider = ({ children, apiKey, baseUrl = "https://api.deep
     [apiKey, baseUrl, conversation],
   )
 
-  // Función para streaming (si lo necesitas)
-  const sendMessageStream = useCallback(
-    async (message, options = {}) => {
-      const {
-        model = "deepseek-chat",
-        maxTokens = 1000,
-        temperature = 0.7,
-        systemPrompt = "Eres un asistente útil",
-        onChunk = () => {},
-        onComplete = () => {},
-      } = options
-
-      setIsLoading(true)
-      setError(null)
-
-      const messages = [{ role: "system", content: systemPrompt }, ...conversation, { role: "user", content: message }]
-
-      try {
-        const response = await fetch(`${baseUrl}/chat/completions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            max_tokens: maxTokens,
-            temperature,
-            stream: true,
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const reader = response.body.getReader()
-        const decoder = new TextDecoder()
-        let fullResponse = ""
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          const chunk = decoder.decode(value)
-          const lines = chunk.split("\n").filter((line) => line.trim() !== "")
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6)
-
-              if (data === "[DONE]") {
-                // Finalizar streaming
-                const updatedConversation = [...messages.slice(1), { role: "assistant", content: fullResponse }]
-                setConversation(updatedConversation)
-                onComplete(fullResponse, updatedConversation)
-                break
-              }
-
-              try {
-                const parsed = JSON.parse(data)
-                const content = parsed.choices[0]?.delta?.content || ""
-
-                if (content) {
-                  fullResponse += content
-                  onChunk(content, fullResponse)
-                }
-              } catch (e) {
-                console.error("Error parsing stream chunk:", e)
-              }
-            }
-          }
-        }
-
-        return { success: true, message: fullResponse }
-      } catch (err) {
-        const errorMessage = err.message || "Error en streaming"
-        setError(errorMessage)
-        return { success: false, error: errorMessage }
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [apiKey, baseUrl, conversation],
-  )
-
-  // Función para reiniciar conversación
   const resetConversation = useCallback(() => {
     setConversation([])
     setError(null)
   }, [])
 
-  // Función para cargar historial
-  const loadConversation = useCallback((messages) => {
-    setConversation(messages)
-  }, [])
-
-  // Valor del contexto
-  const contextValue = {
-    // Estado
+  const value: DeepSeekContextType = {
     isLoading,
     error,
     conversation,
 
-    // Acciones
     sendMessage,
-    sendMessageStream,
     resetConversation,
-    loadConversation,
 
-    // Utilidades
     hasConversation: conversation.length > 0,
-    lastMessage: conversation[conversation.length - 1],
+    lastMessage: conversation.at(-1),
   }
 
-  return <DeepSeekContext.Provider value={contextValue}>{children}</DeepSeekContext.Provider>
+  return (
+    <DeepSeekContext.Provider value={value}>
+      {children}
+    </DeepSeekContext.Provider>
+  )
 }
 
-// Provider con valores por defecto (para desarrollo)
-export const DeepSeekProviderWithEnv = ({ children }) => {
-  const apiKey = process.env.REACT_APP_DEEPSEEK_API_KEY
-  const baseUrl = process.env.REACT_APP_DEEPSEEK_API_URL || "https://api.deepseek.com"
+//
+// PROVIDER AUTOMÁTICO CON VARIABLES DE ENTORNO
+//
+
+export const DeepSeekProviderWithEnv = ({
+  children,
+}: {
+  children: ReactNode
+}) => {
+  const apiKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY
+  const baseUrl =
+    process.env.NEXT_PUBLIC_DEEPSEEK_API_URL || "https://api.deepseek.com"
 
   if (!apiKey) {
-    console.warn("DeepSeek API key no encontrada. Asegúrate de configurar REACT_APP_DEEPSEEK_API_KEY en .env")
+    console.warn(
+      "⚠️ Falta NEXT_PUBLIC_DEEPSEEK_API_KEY en tu .env.local"
+    )
   }
 
   return (
